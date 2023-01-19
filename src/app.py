@@ -8,15 +8,18 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
-#from models import Person
+from models import db, User, Person, Planet
+
+
+# from models import Person
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_url.replace("postgres://", "postgresql://")
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url.replace(
+        "postgres://", "postgresql://")
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////tmp/test.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -27,23 +30,116 @@ CORS(app)
 setup_admin(app)
 
 # Handle/serialize errors like a JSON object
+
+
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
     return jsonify(error.to_dict()), error.status_code
 
 # generate sitemap with all your endpoints
+
+
 @app.route('/')
 def sitemap():
     return generate_sitemap(app)
 
+
 @app.route('/user', methods=['GET'])
+def handl_hello():
+
+    users = User.query.all()
+    all_users = list(map(lambda x: x.serialize(), users))
+
+    return jsonify(all_users), 200
+
+
+@app.route('/person', methods=['GET'])
 def handle_hello():
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+    people = Person.query.all()
+    all_people = list(map(lambda x: x.serialize(), people))
 
-    return jsonify(response_body), 200
+    return jsonify(all_people), 200
+
+
+@app.route('/planet', methods=['GET'])
+def hand_hello():
+
+    planets = Planet.query.all()
+    all_planets = list(map(lambda x: x.serialize(), planets))
+
+    return jsonify(all_planets), 200
+
+
+@app.route('/starship', methods=['GET'])
+def hand_hello():
+
+    starships = Starship.query.all()
+    all_starships = list(map(lambda x: x.serialize(), starships))
+
+    return jsonify(all_starships), 200
+
+
+@app.route('/person/<int:person_id>', methods=['DELETE'])
+def delete_person(person_id):
+ person1 = person.query.get(person_id)
+ if person1 is None:
+  raise APIException("person not found",status_code=404)
+ db.session.delete(person1)
+ db.session.commit()
+
+ return jsonify("ok"), 200
+
+
+@app.route('/user', methods=["POST"])
+def create_user():
+    request_body_user = request.get_json()
+    user1 = User(email=request_body_user["email"], password=request_body_user["password"])
+    db.session.add(user1)
+    db.session.commit
+    request_body_user = request.get_json()
+
+    return jsonify(request_body_user) , 200
+
+@app.route('/person', methods=["POST"])
+def create_person():
+    request_body_person = request.get_json()
+    person1 = Person(first_name=request_body_person["first_name"], last_name=request_body_person["last_name"])
+    db.session.add(person1)
+    db.session.commit
+    request_body_person = request.get_json()
+
+    return jsonify(request_body_person) , 200
+
+@app.route('/planet', methods=["POST"])
+def create_planet():
+    request_body_planet = request.get_json()
+    planet1 = Planet(planet_name=request_body_planet["planet_name"], planet_size=request_body_planet["planet_size"])
+    db.session.add(planet1)
+    db.session.commit
+    request_body_planet = request.get_json()
+
+    return jsonify(request_body_planet) , 200
+
+@app.route('/starship', methods=["POST"])
+def create_starship():
+    request_body_starship = request.get_json()
+    starship1 = Starship(starship_name=request_body_starship["starship_name"], starship_crew=request_body_starship["starship_crew"])
+    db.session.add(starship1)
+    db.session.commit
+    request_body_starship = request.get_json()
+
+    return jsonify(request_body_starship) , 200
+
+@app.route('/user/<int:user_id>', methods=["DELETE"])
+def delete_user(user_id):
+    raise APIException("User not found", status_code=404)
+    
+    db.session.delete(user1)
+    db.session.commit
+
+    return jsonify("deleted") , 200
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
